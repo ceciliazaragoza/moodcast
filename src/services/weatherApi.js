@@ -1,6 +1,6 @@
-const CURRENT_WEATHER_URL = `http://api.weatherapi.com/v1/current.json?key=${import.meta.env.VITE_WEATHER_API_KEY}`;
+const CURRENT_WEATHER_URL = `http://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_WEATHER_API_KEY}&days=1`;
 
-export const getCurrentWeather = async (location) => {
+export const getForecast = async (location) => {
   try {
     const locationQuery = encodeURIComponent(location);
     const currentWeatherRequest = `${CURRENT_WEATHER_URL}&q=${locationQuery}`;

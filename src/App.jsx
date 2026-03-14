@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getCurrentWeather } from "./services/weatherApi";
+import { getForecast } from "./services/weatherApi";
 import "./App.css";
 
 function App() {
@@ -16,14 +16,14 @@ function App() {
       <button
         onClick={async () => {
           try {
-            const weatherData = await getCurrentWeather(location);
+            const weatherData = await getForecast(location);
             console.log(weatherData);
           } catch (error) {
             console.error("Error fetching weather data:", error);
           }
         }}
       >
-        Get current weather
+        Get weather forecast
       </button>
     </div>
   );
