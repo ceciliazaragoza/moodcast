@@ -1,14 +1,94 @@
 import { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
-import { Link, Route, Routes, useNavigate } from "react-router-dom";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import {
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { getForecast } from "./services/weatherApi";
 import "./App.css";
 
+const parseGoogleCredential = (token) => {
+  const payload = token.split(".")[1];
+  return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+};
+
 function WeatherPage() {
   const [location, setLocation] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const navigate = useNavigate();
+  const hasGoogleClientId = Boolean(
+    import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID,
+  );
+
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      setLoginError("");
+      setIsLoggingIn(true);
+
+      const token = credentialResponse.credential;
+      if (!token) {
+        throw new Error("Google did not return an ID token.");
+      }
+
+      const profile = parseGoogleCredential(token);
+      navigate("/profile", {
+        state: {
+          user: {
+            id: profile.sub,
+            name: profile.name,
+            email: profile.email,
+            avatarUrl: profile.picture,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Google login failed:", error);
+      setLoginError(error.message || "Unable to sign in right now.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   return (
     <main className="page">
+      <div className="page-topbar">
+        <button
+          type="button"
+          className="auth-button"
+          onClick={() => setShowLogin((current) => !current)}
+        >
+          Sign up / Log in
+        </button>
+        {showLogin ? (
+          <div className="auth-popover">
+            {hasGoogleClientId ? (
+              <GoogleOAuthProvider
+                clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID || ""}
+              >
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() => {
+                    console.error("Google login failed.");
+                    setLoginError("Google login failed. Please try again.");
+                  }}
+                />
+              </GoogleOAuthProvider>
+            ) : (
+              <p className="error">
+                Missing VITE_GOOGLE_OAUTH_CLIENT_ID in .env
+              </p>
+            )}
+            {isLoggingIn ? <p>Signing in...</p> : null}
+            {loginError ? <p className="error">{loginError}</p> : null}
+          </div>
+        ) : null}
+      </div>
       <section className="card">
         <h1>Moodcast</h1>
         <input
@@ -29,48 +109,29 @@ function WeatherPage() {
         >
           Get weather forecast
         </button>
-        <Link className="link" to="/login">
-          Go to login
-        </Link>
-      </section>
-    </main>
-  );
-}
-
-function LoginPage() {
-  const navigate = useNavigate();
-  const hasGoogleClientId = Boolean(
-    import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID,
-  );
-
-  return (
-    <main className="page">
-      <section className="card">
-        <h1>Login</h1>
-        <p>Sign in with Google to continue.</p>
-        {hasGoogleClientId ? (
-          <GoogleLogin
-            onSuccess={() => navigate("/profile")}
-            onError={() => {
-              console.error("Google login failed.");
-            }}
-          />
-        ) : (
-          <p className="error">Missing VITE_GOOGLE_OAUTH_CLIENT_ID in .env</p>
-        )}
       </section>
     </main>
   );
 }
 
 function ProfilePage() {
+  const location = useLocation();
+  const user = location.state?.user;
+
   return (
     <main className="page">
       <section className="card">
         <h1>Profile</h1>
-        <p>This is a placeholder profile page.</p>
-        <Link className="link" to="/login">
-          Back to login
+        {user ? (
+          <>
+            <p>Welcome, {user.name || "Google User"}.</p>
+            <p>{user.email}</p>
+          </>
+        ) : (
+          <p>This is a placeholder profile page.</p>
+        )}
+        <Link className="link" to="/">
+          Back to home
         </Link>
       </section>
     </main>
@@ -81,9 +142,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<WeatherPage />} />
-      <Route path="/login" element={<LoginPage />} />
       <Route path="/profile" element={<ProfilePage />} />
-      <Route path="*" element={<LoginPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -4,6 +4,35 @@
   place-items: center;
   padding: 24px;
   box-sizing: border-box;
+  position: relative;
+}
+
+.page-topbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.auth-button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-popover {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px;
 }
 
 .card {
@@ -46,4 +75,10 @@
 
 .error {
   color: #b42318;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-top: 72px;
+  }
 }
