@@ -1,0 +1,18 @@
+{
+    "name": "Drink Water Event Popup",
+    "description": "Demonstrates usage and features of the event page by reminding user to drink water",
+    "version": "1.0",
+    "manifest_version": 3,
+    "permissions": [],
+    "action": {
+        "default_title": "MoodCast!",
+        "default_popup": "popup.html"
+    },
+    "icons": {
+        "16": "cat.png",
+        "32": "cat.png",
+        "48": "cat.png",
+        "128": "cat.png"
+    },
+    "content_scripts": []
+}
