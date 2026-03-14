@@ -1,7 +1,7 @@
 'use strict';
 
 
-localStorage.setItem("isSunny", "false");
+localStorage.setItem("isSunny", "true");
 const isSunny = localStorage.getItem("isSunny");
 const message = document.getElementById('message');
 const button = document.getElementById('task')
