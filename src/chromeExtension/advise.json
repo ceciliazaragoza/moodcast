@@ -1,0 +1,34 @@
+{    "calming_techniques": [
+    {
+        "name": "Box Breathing",
+        "instruction": "Inhale for 4 counts, hold for 4 counts, exhale for 4 counts, hold for 4 counts. Repeat 4 times. This technique is used by Navy SEALs to stay calm under pressure."
+    },
+    {
+        "name": "4-7-8 Breathing",
+        "instruction": "Inhale quietly through your nose for 4 counts, hold your breath for 7 counts, then exhale completely through your mouth for 8 counts. Repeat up to 4 cycles."
+    },
+    {
+        "name": "Diaphragmatic Breathing",
+        "instruction": "Place one hand on your chest and one on your belly. Breathe in slowly through your nose so your belly pushes your hand out. Exhale slowly. Your chest should remain relatively still."
+    },
+    {
+        "name": "Alternate Nostril Breathing",
+        "instruction": "Close your right nostril with your thumb and inhale through the left for 4 counts. Close both nostrils and hold for 4 counts. Release the right nostril and exhale for 4 counts. Repeat on the other side."
+    },
+    {
+        "name": "Pursed Lip Breathing",
+        "instruction": "Relax your neck and shoulders. Inhale slowly through your nose for 2 counts. Pucker your lips as if blowing out a candle, then exhale slowly for 4 counts. This slows your breathing pace and reduces anxiety quickly."
+    },
+    {
+        "name": "Resonance Breathing",
+        "instruction": "Inhale for 5 counts and exhale for 5 counts, aiming for exactly 6 breath cycles per minute. This pace synchronizes your heart rate and breathing, creating a deeply calm state."
+    },
+    {
+        "name": "Lion's Breath",
+        "instruction": "Inhale deeply through your nose. Open your mouth wide, stick out your tongue, and exhale forcefully with a 'haaa' sound. This releases tension in the face, jaw, and chest."
+    },
+    {
+        "name": "Progressive Muscle Relaxation Breathing",
+        "instruction": "Inhale and tense a muscle group (e.g. your fists) for 5 counts. Exhale and release the tension completely. Work your way from your feet to your face, one group at a time."
+    }
+]}
