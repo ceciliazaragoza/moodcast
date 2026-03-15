@@ -62,7 +62,7 @@ app.get("/api/tasks", async (req, res) => {
     }
 
     const result = await pool.query(
-      `select created_at, description, completed, email
+      `select id, created_at, description, completed, email
        from task
        where email = $1
        order by created_at desc`,
@@ -99,7 +99,7 @@ app.post("/api/tasks", async (req, res) => {
     const result = await pool.query(
       `insert into task (description, completed, email)
        values ($1, $2, $3)
-       returning created_at, description, completed, email`,
+       returning id, created_at, description, completed, email`,
       [description, Boolean(completed), email],
     );
 
@@ -157,6 +157,53 @@ app.delete("/api/tasks", async (req, res) => {
     return res.status(500).json({
       ok: false,
       error: error.message || "Failed to delete task.",
+    });
+  }
+});
+
+app.patch("/api/tasks", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "POSTGRES_URL is not configured on the server.",
+      });
+    }
+
+    const { email, id, completed } = req.body;
+    if (
+      !email ||
+      (typeof id !== "number" && typeof id !== "string") ||
+      id === "" ||
+      typeof completed !== "boolean"
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "email, id, and completed(boolean) are required.",
+      });
+    }
+
+    const result = await pool.query(
+      `update task
+       set completed = $3
+       where email = $1 and id = $2::bigint
+       returning id, created_at, description, completed, email`,
+      [email, id, completed],
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        ok: false,
+        error: "No matching task found to update.",
+      });
+    }
+
+    return res.json({ ok: true, task: result.rows[0] });
+  } catch (error) {
+    console.error("update task failed:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message || "Failed to update task.",
     });
   }
 });

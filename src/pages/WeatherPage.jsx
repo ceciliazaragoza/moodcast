@@ -239,6 +239,57 @@ export default function WeatherPage() {
     }
   };
 
+  const toggleTask = async (task, nextCompleted) => {
+    if (!activeTaskEmail) {
+      setTaskError("Sign in first to update tasks.");
+      return;
+    }
+
+    const previousCompleted = Boolean(task.completed);
+
+    setTaskItems((current) =>
+      current.map((item) =>
+        item.id === task.id ? { ...item, completed: Boolean(nextCompleted) } : item,
+      ),
+    );
+
+    setTaskLoading(true);
+    setTaskError("");
+    setTaskMessage("");
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: activeTaskEmail,
+          id: task.id,
+          completed: Boolean(nextCompleted),
+        }),
+      });
+      const result = await readApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error || `Failed to update task (HTTP ${response.status}).`,
+        );
+      }
+
+      setTaskMessage("Task updated.");
+    } catch (error) {
+      setTaskItems((current) =>
+        current.map((item) =>
+          item.id === task.id ? { ...item, completed: previousCompleted } : item,
+        ),
+      );
+      setTaskError(error.message || "Could not update task.");
+    } finally {
+      setTaskLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoginError("");
@@ -538,6 +589,7 @@ export default function WeatherPage() {
                 tasks={taskItems}
                 taskLoading={taskLoading}
                 onDelete={deleteTask}
+                onToggle={toggleTask}
               />
               {hasMoreTasks ? (
                 <button

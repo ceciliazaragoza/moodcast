@@ -1,6 +1,6 @@
 import "./App.css";
 
-function Task({ tasks, taskLoading, onDelete }) {
+function Task({ tasks, taskLoading, onDelete, onToggle }) {
   if (!tasks || tasks.length === 0) {
     return <p>No tasks yet. Add your first one on the right.</p>;
   }
@@ -10,10 +10,15 @@ function Task({ tasks, taskLoading, onDelete }) {
       {tasks.map((task) => (
         <div
           className="task-item"
-          key={`${task.created_at}-${task.description}`}
+          key={task.id || `${task.created_at}-${task.description}`}
         >
           <label className="tasks">
-            <input type="checkbox" checked={Boolean(task.completed)} readOnly />
+            <input
+              type="checkbox"
+              checked={Boolean(task.completed)}
+              onChange={(event) => onToggle(task, event.target.checked)}
+              disabled={taskLoading}
+            />
             <span>{task.description}</span>
           </label>
           <button
