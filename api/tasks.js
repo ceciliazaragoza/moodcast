@@ -39,7 +39,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ ok: false, error: "email is required." });
       }
 
-      if (Number.isNaN(page) || Number.isNaN(pageSize) || page < 1 || pageSize < 1) {
+      if (
+        Number.isNaN(page) ||
+        Number.isNaN(pageSize) ||
+        page < 1 ||
+        pageSize < 1
+      ) {
         return res.status(400).json({
           ok: false,
           error: "page and pageSize must be positive integers.",
@@ -50,7 +55,7 @@ export default async function handler(req, res) {
 
       const [tasksResult, countResult] = await Promise.all([
         pool.query(
-        `select id, created_at, description, completed, email
+          `select id, created_at, description, completed, email
          from task
          where email = $1
          order by created_at desc
