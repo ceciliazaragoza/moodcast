@@ -54,6 +54,7 @@ export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState(null);
   const [weatherError, setWeatherError] = useState("");
   const [weatherLoading, setWeatherLoading] = useState(false);
+  const [extensionDownloadError, setExtensionDownloadError] = useState("");
   const [currentLocationLabel, setCurrentLocationLabel] = useState("");
   const [geoStatusMessage, setGeoStatusMessage] = useState(
     "Detecting your current location...",
@@ -407,6 +408,33 @@ export default function WeatherPage() {
     );
   };
 
+  const handleExtensionDownload = async () => {
+    setExtensionDownloadError("");
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.BASE_URL}chromeExtension.zip`,
+      );
+      if (!response.ok) {
+        throw new Error(`Download failed (HTTP ${response.status}).`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = blobUrl;
+      anchor.download = "chromeExtension.zip";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      setExtensionDownloadError(
+        error?.message || "Could not download extension file.",
+      );
+    }
+  };
+
   useEffect(() => {
     const onMessage = (event) => {
       if (event.source !== window) {
@@ -578,9 +606,16 @@ export default function WeatherPage() {
         )}
       </div>
       <div className="extension">
-        <a href="chromeExtension.zip" download>
-          <button>Download Extension</button>
-        </a>
+        <button
+          type="button"
+          className="auth-button"
+          onClick={handleExtensionDownload}
+        >
+          Download Extension
+        </button>
+        {extensionDownloadError ? (
+          <p className="error">{extensionDownloadError}</p>
+        ) : null}
       </div>
       <main>
         <div className="left">

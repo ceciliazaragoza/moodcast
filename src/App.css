@@ -112,13 +112,15 @@ body,
   cursor: pointer;
   display: flex;
   gap: 12px;
-  align-items: right;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: flex-start;
   padding: 20px 24px;
-  position: relative;
   position: fixed;
-  top: 0;          
+  top: 0;
   left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 30;
 }
 
 main {
