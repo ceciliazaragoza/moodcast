@@ -33,19 +33,51 @@ export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
       const email = req.query?.email;
+      const page = Number.parseInt(req.query?.page ?? "1", 10);
+      const pageSize = Number.parseInt(req.query?.pageSize ?? "5", 10);
       if (!email) {
         return res.status(400).json({ ok: false, error: "email is required." });
       }
 
-      const result = await pool.query(
+      if (Number.isNaN(page) || Number.isNaN(pageSize) || page < 1 || pageSize < 1) {
+        return res.status(400).json({
+          ok: false,
+          error: "page and pageSize must be positive integers.",
+        });
+      }
+
+      const offset = (page - 1) * pageSize;
+
+      const [tasksResult, countResult] = await Promise.all([
+        pool.query(
         `select created_at, description, completed, email
          from task
          where email = $1
-         order by created_at desc`,
-        [email],
-      );
+         order by created_at desc
+         limit $2
+         offset $3`,
+          [email, pageSize, offset],
+        ),
+        pool.query(
+          `select count(*)::int as total
+           from task
+           where email = $1`,
+          [email],
+        ),
+      ]);
 
-      return res.status(200).json({ ok: true, tasks: result.rows });
+      const total = countResult.rows[0]?.total ?? 0;
+
+      return res.status(200).json({
+        ok: true,
+        tasks: tasksResult.rows,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          hasMore: offset + tasksResult.rows.length < total,
+        },
+      });
     }
 
     if (req.method === "POST") {

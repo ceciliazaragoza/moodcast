@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import WeatherPage from "./pages/WeatherPage";
 import TestPage from "./pages/TestPage";
 import ProfilePage from "./pages/ProfilePage";
+
 import "./App.css";
 
 function App() {
