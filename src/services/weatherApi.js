@@ -1,11 +1,18 @@
+const WEATHER_API_BASE = "https://api.weatherapi.com/v1/forecast.json";
+
 export const getForecast = async (location) => {
   try {
     if (!location) {
       throw new Error("Location is required to fetch weather.");
     }
 
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+    if (!apiKey) {
+      throw new Error("VITE_WEATHER_API_KEY is missing.");
+    }
+
     const response = await fetch(
-      `/api/weather?q=${encodeURIComponent(location)}&days=1`,
+      `${WEATHER_API_BASE}?key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(location)}&days=1`,
     );
 
     let data = null;
@@ -17,7 +24,8 @@ export const getForecast = async (location) => {
 
     if (!response.ok) {
       throw new Error(
-        data?.error ||
+        data?.error?.message ||
+          data?.error ||
           `Failed to fetch current weather data (HTTP ${response.status}).`,
       );
     }
