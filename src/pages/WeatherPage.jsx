@@ -336,6 +336,65 @@ export default function WeatherPage() {
     );
   };
 
+  const postMessageToExtension = ({ type, payload }) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.postMessage(
+      {
+        source: "moodcast-web-app",
+        target: "moodcast-chrome-extension",
+        type,
+        payload,
+      },
+      window.location.origin,
+    );
+  };
+
+  useEffect(() => {
+    const onMessage = (event) => {
+      if (event.source !== window) {
+        return;
+      }
+
+      const message = event.data;
+      const isWeatherRequest =
+        message?.target === "moodcast-web-app" &&
+        (message?.type === "REQUEST_WEATHER" ||
+          message?.type === "MOODCAST_WEATHER_REQUEST");
+
+      if (!isWeatherRequest) {
+        return;
+      }
+
+      postMessageToExtension({
+        type: "WEATHER_RESPONSE",
+        payload: {
+          requestId: message?.requestId || null,
+          current: {
+            tempF: weatherData?.current?.temp_f ?? null,
+            condition: weatherData?.current?.condition?.text || "",
+          },
+          status: weatherLoading
+            ? "loading"
+            : weatherError
+              ? "error"
+              : weatherData
+                ? "ready"
+                : "empty",
+          error: weatherError || "",
+          fetchedAt: new Date().toISOString(),
+        },
+      });
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+    };
+  }, [weatherData, weatherError, weatherLoading]);
+
   const fetchWeatherForCurrentLocation = async () => {
     if (!navigator.geolocation) {
       setWeatherError("Geolocation is not supported by your browser.");
@@ -377,6 +436,21 @@ export default function WeatherPage() {
         ) || "Location detected",
       );
       setGeoStatusMessage("Using your current location.");
+      postMessageToExtension({
+        type: "WEATHER_UPDATE",
+        payload: {
+          location: {
+            name: forecast?.location?.name || "Unknown",
+            region: forecast?.location?.region || "",
+            country: forecast?.location?.country || "",
+          },
+          current: {
+            tempF: forecast?.current?.temp_f ?? null,
+            condition: forecast?.current?.condition?.text || "",
+          },
+          fetchedAt: new Date().toISOString(),
+        },
+      });
     } catch (error) {
       setWeatherData(null);
       setCurrentLocationLabel("");
@@ -384,6 +458,13 @@ export default function WeatherPage() {
         error?.message || "Could not detect your location right now.",
       );
       setGeoStatusMessage("Location detection failed.");
+      postMessageToExtension({
+        type: "WEATHER_ERROR",
+        payload: {
+          message: error?.message || "Could not detect your location right now.",
+          fetchedAt: new Date().toISOString(),
+        },
+      });
     } finally {
       setWeatherLoading(false);
     }
@@ -516,14 +597,6 @@ export default function WeatherPage() {
                 value={taskDescription}
                 onChange={(event) => setTaskDescription(event.target.value)}
               />
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={taskCompleted}
-                  onChange={(event) => setTaskCompleted(event.target.checked)}
-                />
-                Completed
-              </label>
               <div className="task-actions">
                 <button type="button" onClick={addTask} disabled={taskLoading}>
                   Add Task
