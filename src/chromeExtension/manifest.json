@@ -1,9 +1,10 @@
 {
-    "name": "Drink Water Event Popup",
+    "name": "Moodcast",
     "description": "Displays a image and text for mental health support depending on the weather",
     "version": "1.0",
     "manifest_version": 3,
-    "permissions": [],
+    "permissions": ["geolocation"],
+    "host_permissions": ["https://api.open-meteo.com/*"],
     "action": {
         "default_title": "MoodCast!",
         "default_popup": "popup.html"
