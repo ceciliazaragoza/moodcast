@@ -474,9 +474,6 @@ export default function WeatherPage() {
         <div className="right">
           <div className="rightContent">
             <h2>Moodcast</h2>
-            <Link className="link" to="/test">
-              Open Supabase Test
-            </Link>
 
             <p className="helper-text">{geoStatusMessage}</p>
             <p className="helper-text">
