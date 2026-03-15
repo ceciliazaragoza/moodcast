@@ -1,7 +1,11 @@
-const CURRENT_WEATHER_URL = `http://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_WEATHER_API_KEY}&days=1`;
+const CURRENT_WEATHER_URL = `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_WEATHER_API_KEY}&days=1`;
 
 export const getForecast = async (location) => {
   try {
+    if (!location) {
+      throw new Error("Location is required to fetch weather.");
+    }
+
     const locationQuery = encodeURIComponent(location);
     const currentWeatherRequest = `${CURRENT_WEATHER_URL}&q=${locationQuery}`;
     const response = await fetch(currentWeatherRequest);

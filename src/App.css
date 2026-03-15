@@ -126,6 +126,21 @@ main {
   font-size: 14px;
 }
 
+.weather-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 4px;
+}
+
+.weather-card p {
+  margin: 0;
+  color: #0f172a;
+  text-align: left;
+}
+
 .tasks {
   display: flex;
   align-items: center;
