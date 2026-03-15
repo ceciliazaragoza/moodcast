@@ -521,6 +521,11 @@ export default function WeatherPage() {
           </>
         )}
       </div>
+      <div className="extension">
+        <a href="chromeExtension.zip" download>
+          <button>Download Extension</button>
+        </a>
+      </div>
       <main>
         <div className="left">
           <div className="leftContent">
