@@ -1,5 +1,14 @@
 const WEATHER_API_BASE = "https://api.weatherapi.com/v1/forecast.json";
 
+const normalizeEnvValue = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  // Handles common deployment mistakes like quoted values: "abc123"
+  return value.trim().replace(/^['"]|['"]$/g, "");
+};
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "GET") {
@@ -9,7 +18,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const key = process.env.WEATHER_API_KEY || process.env.VITE_WEATHER_API_KEY;
+    const key = normalizeEnvValue(
+      process.env.WEATHER_API_KEY || process.env.VITE_WEATHER_API_KEY,
+    );
     const q = req.query?.q;
     const days = req.query?.days || "1";
 
@@ -43,11 +54,21 @@ export default async function handler(req, res) {
     }
 
     if (!response.ok) {
+      const weatherApiError =
+        parsed?.error?.message ||
+        "Failed to fetch current weather data from WeatherAPI.";
+
+      if (/api key is invalid/i.test(weatherApiError)) {
+        return res.status(502).json({
+          ok: false,
+          error:
+            "WeatherAPI key is invalid. Set WEATHER_API_KEY in deployment environment variables and redeploy.",
+        });
+      }
+
       return res.status(response.status).json({
         ok: false,
-        error:
-          parsed?.error?.message ||
-          "Failed to fetch current weather data from WeatherAPI.",
+        error: weatherApiError,
       });
     }
 
