@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { Link } from "react-router-dom";
 import { getForecast } from "../services/weatherApi";
@@ -43,6 +43,10 @@ export default function WeatherPage() {
   const [taskDescription, setTaskDescription] = useState("");
   const [taskCompleted, setTaskCompleted] = useState(false);
   const [taskItems, setTaskItems] = useState([]);
+  const [taskPage, setTaskPage] = useState(1);
+  const [taskPageSize] = useState(5);
+  const [hasMoreTasks, setHasMoreTasks] = useState(false);
+  const [totalTasks, setTotalTasks] = useState(0);
   const [taskError, setTaskError] = useState("");
   const [taskMessage, setTaskMessage] = useState("");
   const [taskLoading, setTaskLoading] = useState(false);
@@ -50,7 +54,10 @@ export default function WeatherPage() {
     import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID,
   );
 
-  const loadTasks = async (emailToLoad = taskEmail) => {
+  const loadTasks = async (
+    emailToLoad = taskEmail,
+    { page = 1, append = false, successMessage = "Tasks loaded." } = {},
+  ) => {
     if (!emailToLoad) {
       setTaskError("Enter an email before loading tasks.");
       return;
@@ -62,7 +69,7 @@ export default function WeatherPage() {
 
     try {
       const response = await fetch(
-        `/api/tasks?email=${encodeURIComponent(emailToLoad)}`,
+        `/api/tasks?email=${encodeURIComponent(emailToLoad)}&page=${page}&pageSize=${taskPageSize}`,
       );
       const result = await readApiResponse(response);
 
@@ -72,13 +79,31 @@ export default function WeatherPage() {
         );
       }
 
-      setTaskItems(result?.tasks ?? []);
-      setTaskMessage("Tasks loaded.");
+      const incomingTasks = result?.tasks ?? [];
+      const pagination = result?.pagination ?? {};
+
+      setTaskItems((current) =>
+        append ? [...current, ...incomingTasks] : incomingTasks,
+      );
+      setTaskPage(pagination.page ?? page);
+      setHasMoreTasks(Boolean(pagination.hasMore));
+      setTotalTasks(pagination.total ?? incomingTasks.length);
+      if (successMessage) {
+        setTaskMessage(successMessage);
+      }
     } catch (error) {
       setTaskError(error.message || "Could not load tasks.");
     } finally {
       setTaskLoading(false);
     }
+  };
+
+  const loadMoreTasks = async () => {
+    await loadTasks(taskEmail, {
+      page: taskPage + 1,
+      append: true,
+      successMessage: "Loaded more tasks.",
+    });
   };
 
   const addTask = async () => {
@@ -113,8 +138,11 @@ export default function WeatherPage() {
 
       setTaskDescription("");
       setTaskCompleted(false);
-      setTaskMessage("Task added.");
-      await loadTasks(taskEmail);
+      await loadTasks(taskEmail, {
+        page: 1,
+        append: false,
+        successMessage: "Task added.",
+      });
     } catch (error) {
       setTaskError(error.message || "Could not add task.");
     } finally {
@@ -151,8 +179,11 @@ export default function WeatherPage() {
         );
       }
 
-      setTaskMessage("Task deleted.");
-      await loadTasks(taskEmail);
+      await loadTasks(taskEmail, {
+        page: 1,
+        append: false,
+        successMessage: "Task deleted.",
+      });
     } catch (error) {
       setTaskError(error.message || "Could not delete task.");
     } finally {
@@ -178,6 +209,11 @@ export default function WeatherPage() {
       if (profile.email) {
         setTaskEmail(profile.email);
         localStorage.setItem("moodcast_email", profile.email);
+        await loadTasks(profile.email, {
+          page: 1,
+          append: false,
+          successMessage: "Signed in. Tasks loaded.",
+        });
       }
       setUserProfile(nextUserProfile);
       localStorage.setItem(
@@ -185,7 +221,9 @@ export default function WeatherPage() {
         JSON.stringify(nextUserProfile),
       );
       setShowLogin(false);
-      setTaskMessage("Signed in. You can manage tasks on this page.");
+      if (!profile.email) {
+        setTaskMessage("Signed in. You can manage tasks on this page.");
+      }
     } catch (error) {
       console.error("Google login failed:", error);
       setLoginError(error.message || "Unable to sign in right now.");
@@ -193,6 +231,20 @@ export default function WeatherPage() {
       setIsLoggingIn(false);
     }
   };
+
+  useEffect(() => {
+    if (!initialTaskEmail) {
+      return;
+    }
+
+    loadTasks(initialTaskEmail, {
+      page: 1,
+      append: false,
+      successMessage: "",
+    });
+    // Runs once on initial homepage load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="page">
@@ -300,7 +352,13 @@ export default function WeatherPage() {
             </button>
             <button
               type="button"
-              onClick={() => loadTasks(taskEmail)}
+              onClick={() =>
+                loadTasks(taskEmail, {
+                  page: 1,
+                  append: false,
+                  successMessage: "Tasks loaded.",
+                })
+              }
               disabled={taskLoading}
             >
               Load Tasks
@@ -313,6 +371,9 @@ export default function WeatherPage() {
 
           {taskItems.length > 0 ? (
             <div className="task-list">
+              <p>
+                Showing {taskItems.length} of {totalTasks} tasks.
+              </p>
               {taskItems.map((task) => (
                 <div
                   className="task-item"
@@ -330,6 +391,15 @@ export default function WeatherPage() {
                   </button>
                 </div>
               ))}
+              {hasMoreTasks ? (
+                <button
+                  type="button"
+                  onClick={loadMoreTasks}
+                  disabled={taskLoading}
+                >
+                  Load More
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>
