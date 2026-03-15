@@ -339,7 +339,7 @@ export default function WeatherPage() {
       <main>
         <div className="left">
           <div className="leftContent">
-            <h1>Tasks</h1>
+            <h1>Moodcast</h1>
             <p>
               Showing {taskItems.length} of {totalTasks} tasks
             </p>
@@ -369,14 +369,14 @@ export default function WeatherPage() {
 
         <div className="right">
           <div className="rightContent">
-            <h2>Moodcast</h2>
-            <Link className="link" to="/test">
-              Open Supabase Test
-            </Link>
+            <h2>Discover Your Weather & Mood</h2>
+            <p className="helper-text" style={{ marginBottom: '8px', fontSize: '14px' }}>
+              Enter your location to see the weather and get mood-based task suggestions
+            </p>
 
             <input
               type="text"
-              placeholder="Enter location"
+              placeholder="Enter city name (e.g., New York, London)"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
@@ -391,11 +391,14 @@ export default function WeatherPage() {
                 }
               }}
             >
-              Get weather forecast
+              Get My Forecast
             </button>
 
             <div className="task-panel">
-              <h3>Add Task</h3>
+              <h3>✨ Add a New Task</h3>
+              <p className="helper-text" style={{ marginTop: '4px' }}>
+                Let your mood guide your productivity
+              </p>
               {hasTaskIdentity ? (
                 <p className="helper-text">
                   Adding tasks for: {activeTaskEmail}
