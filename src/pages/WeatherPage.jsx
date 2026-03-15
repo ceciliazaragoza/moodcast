@@ -36,7 +36,6 @@ const initialUserProfile =
     : null;
 
 export default function WeatherPage() {
-  const [location, setLocation] = useState("");
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -52,6 +51,13 @@ export default function WeatherPage() {
   const [taskError, setTaskError] = useState("");
   const [taskMessage, setTaskMessage] = useState("");
   const [taskLoading, setTaskLoading] = useState(false);
+  const [weatherData, setWeatherData] = useState(null);
+  const [weatherError, setWeatherError] = useState("");
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [currentLocationLabel, setCurrentLocationLabel] = useState("");
+  const [geoStatusMessage, setGeoStatusMessage] = useState(
+    "Detecting your current location...",
+  );
   const hasGoogleClientId = Boolean(
     import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID,
   );
@@ -289,6 +295,104 @@ export default function WeatherPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const getCityOrPostalFromCoords = async (latitude, longitude) => {
+    const reverseGeocodeUrl =
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+      `&lat=${encodeURIComponent(latitude)}` +
+      `&lon=${encodeURIComponent(longitude)}`;
+
+    const response = await fetch(reverseGeocodeUrl, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    const result = await readApiResponse(response);
+    if (!response.ok) {
+      throw new Error(
+        result?.error || "Could not resolve your city from current location.",
+      );
+    }
+
+    const address = result?.address || {};
+    const cityName =
+      address.city ||
+      address.town ||
+      address.village ||
+      address.municipality ||
+      address.county;
+    const postalCode = address.postcode;
+
+    if (cityName) {
+      return cityName;
+    }
+
+    if (postalCode) {
+      return postalCode;
+    }
+
+    throw new Error(
+      "Could not determine a city or zip code from your current location.",
+    );
+  };
+
+  const fetchWeatherForCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      setWeatherError("Geolocation is not supported by your browser.");
+      setGeoStatusMessage("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setWeatherLoading(true);
+    setWeatherError("");
+    setGeoStatusMessage("Detecting your current location...");
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+
+      const coordinatesQuery = `${position.coords.latitude},${position.coords.longitude}`;
+      let locationQuery = "";
+
+      try {
+        locationQuery = await getCityOrPostalFromCoords(
+          position.coords.latitude,
+          position.coords.longitude,
+        );
+      } catch {
+        // Fallback keeps weather available even when reverse geocoding is unavailable.
+        locationQuery = coordinatesQuery;
+      }
+
+      const forecast = await getForecast(locationQuery);
+      setWeatherData(forecast);
+      setCurrentLocationLabel(
+        `${forecast?.location?.name || "Unknown"}, ${forecast?.location?.region || ""}`.replace(
+          /,\s*$/,
+          "",
+        ) || "Location detected",
+      );
+      setGeoStatusMessage("Using your current location.");
+    } catch (error) {
+      setWeatherData(null);
+      setCurrentLocationLabel("");
+      setWeatherError(
+        error?.message || "Could not detect your location right now.",
+      );
+      setGeoStatusMessage("Location detection failed.");
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeatherForCurrentLocation();
+  }, []);
+
   return (
     <div className="container">
       <div className="topRightProfile">
@@ -370,28 +474,28 @@ export default function WeatherPage() {
         <div className="right">
           <div className="rightContent">
             <h2>Moodcast</h2>
-            <Link className="link" to="/test">
-              Open Supabase Test
-            </Link>
 
-            <input
-              type="text"
-              placeholder="Enter location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  const weatherData = await getForecast(location);
-                  console.log(weatherData);
-                } catch (error) {
-                  console.error("Error fetching weather data:", error);
-                }
-              }}
-            >
-              Get weather forecast
+            <p className="helper-text">{geoStatusMessage}</p>
+            <p className="helper-text">
+              Current location: {currentLocationLabel || "Not available yet"}
+            </p>
+
+            {weatherLoading ? <p>Loading weather...</p> : null}
+            {weatherError ? <p className="error">{weatherError}</p> : null}
+            {weatherData ? (
+              <div className="weather-card">
+                <p>
+                  {weatherData.location?.name}, {weatherData.location?.region}
+                </p>
+                <p>
+                  {weatherData.current?.temp_f} F |{" "}
+                  {weatherData.current?.condition?.text}
+                </p>
+              </div>
+            ) : null}
+
+            <button type="button" onClick={fetchWeatherForCurrentLocation}>
+              Refresh current location weather
             </button>
 
             <div className="task-panel">
