@@ -1,4 +1,5 @@
 import "./App.css";
+import Task from "./Task.jsx";
 import profileIcon from "./assets/pfp.jpg";
 
 function App() {
@@ -15,29 +16,9 @@ function App() {
         <div className="leftContent">
           <h1>Moodcast</h1>
           <h2>test</h2>
-
-          {/* Three tasks */}
-          <div className="tasks">
-            <label>
-              <input type="checkbox" />
-              <span>Task Name</span>
-            </label>
-          </div>
-
-          <div className="tasks">
-            <label>
-              <input type="checkbox" />
-              <span>Task Name</span>
-            </label>
-          </div>
-
-          <div className="tasks">
-            <label>
-              <input type="checkbox" />
-              <span>Task Name</span>
-            </label>
-          </div>
+          <Task />
         </div>
+
       </div>
 
       {/* Right side */}
