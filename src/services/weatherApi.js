@@ -1,18 +1,27 @@
-const CURRENT_WEATHER_URL = `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_WEATHER_API_KEY}&days=1`;
-
 export const getForecast = async (location) => {
   try {
     if (!location) {
       throw new Error("Location is required to fetch weather.");
     }
 
-    const locationQuery = encodeURIComponent(location);
-    const currentWeatherRequest = `${CURRENT_WEATHER_URL}&q=${locationQuery}`;
-    const response = await fetch(currentWeatherRequest);
-    if (!response.ok) {
-      throw new Error("Failed to fetch current weather data");
+    const response = await fetch(
+      `/api/weather?q=${encodeURIComponent(location)}&days=1`,
+    );
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
     }
-    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          `Failed to fetch current weather data (HTTP ${response.status}).`,
+      );
+    }
+
     return data;
   } catch (error) {
     console.error("Error fetching current weather:", error);

@@ -249,7 +249,9 @@ export default function WeatherPage() {
 
     setTaskItems((current) =>
       current.map((item) =>
-        item.id === task.id ? { ...item, completed: Boolean(nextCompleted) } : item,
+        item.id === task.id
+          ? { ...item, completed: Boolean(nextCompleted) }
+          : item,
       ),
     );
 
@@ -281,7 +283,9 @@ export default function WeatherPage() {
     } catch (error) {
       setTaskItems((current) =>
         current.map((item) =>
-          item.id === task.id ? { ...item, completed: previousCompleted } : item,
+          item.id === task.id
+            ? { ...item, completed: previousCompleted }
+            : item,
         ),
       );
       setTaskError(error.message || "Could not update task.");
@@ -512,7 +516,8 @@ export default function WeatherPage() {
       postMessageToExtension({
         type: "WEATHER_ERROR",
         payload: {
-          message: error?.message || "Could not detect your location right now.",
+          message:
+            error?.message || "Could not detect your location right now.",
           fetchedAt: new Date().toISOString(),
         },
       });
