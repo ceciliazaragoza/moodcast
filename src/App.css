@@ -40,8 +40,16 @@ body,
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.12) 0%, transparent 50%);
+    radial-gradient(
+      circle at 20% 80%,
+      rgba(120, 119, 198, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 255, 255, 0.12) 0%,
+      transparent 50%
+    );
   pointer-events: none;
 }
 
@@ -132,6 +140,10 @@ main {
   transition: all 0.3s ease;
 }
 
+.leftContent {
+  justify-content: center;
+}
+
 .leftContent:hover,
 .rightContent:hover {
   transform: translateY(-2px);
@@ -153,6 +165,8 @@ main {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-align: center;
+  width: 100%;
 }
 
 .rightContent h2 {
