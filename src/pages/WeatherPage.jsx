@@ -580,7 +580,7 @@ export default function WeatherPage() {
       <main>
         <div className="left">
           <div className="leftContent">
-            <h1>Tasks</h1>
+            <h1>MoodCast</h1>
             <p>
               Showing {taskItems.length} of {totalTasks} tasks
             </p>
@@ -611,7 +611,7 @@ export default function WeatherPage() {
 
         <div className="right">
           <div className="rightContent">
-            <h2>Moodcast</h2>
+            <h2>Discover Your Weather & Mood</h2>
 
             <p className="helper-text">{geoStatusMessage}</p>
             <p className="helper-text">
@@ -637,7 +637,7 @@ export default function WeatherPage() {
             </button>
 
             <div className="task-panel">
-              <h3>Add Task</h3>
+              <h3>✨ Add a New Task</h3>
               {hasTaskIdentity ? (
                 <p className="helper-text">
                   Adding tasks for: {activeTaskEmail}
