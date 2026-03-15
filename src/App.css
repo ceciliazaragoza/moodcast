@@ -104,6 +104,23 @@ body,
   min-width: 280px;
 }
 
+.extension {
+  margin: 5px;
+  outline: none;
+  border-radius: 8px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: right;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  position: relative;
+  position: fixed;
+  top: 0;          
+  left: 0;
+}
+
 main {
   display: flex;
   flex-grow: 1;
