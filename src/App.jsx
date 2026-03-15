@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import {
-  Link,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getForecast } from "./services/weatherApi";
 import "./App.css";
 
@@ -32,13 +25,21 @@ const readApiResponse = async (response) => {
 };
 
 const initialTaskEmail =
-  typeof window !== "undefined" ? localStorage.getItem("moodcast_email") || "" : "";
+  typeof window !== "undefined"
+    ? localStorage.getItem("moodcast_email") || ""
+    : "";
+
+const initialUserProfile =
+  typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("moodcast_user_profile") || "null")
+    : null;
 
 function WeatherPage() {
   const [location, setLocation] = useState("");
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [userProfile, setUserProfile] = useState(initialUserProfile);
   const [taskEmail, setTaskEmail] = useState(initialTaskEmail);
   const [taskDescription, setTaskDescription] = useState("");
   const [taskCompleted, setTaskCompleted] = useState(false);
@@ -46,7 +47,6 @@ function WeatherPage() {
   const [taskError, setTaskError] = useState("");
   const [taskMessage, setTaskMessage] = useState("");
   const [taskLoading, setTaskLoading] = useState(false);
-  const navigate = useNavigate();
   const hasGoogleClientId = Boolean(
     import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID,
   );
@@ -172,20 +172,21 @@ function WeatherPage() {
       }
 
       const profile = parseGoogleCredential(token);
+      const nextUserProfile = {
+        name: profile.name || profile.email || "User",
+        picture: profile.picture || "",
+      };
       if (profile.email) {
         setTaskEmail(profile.email);
         localStorage.setItem("moodcast_email", profile.email);
       }
-      navigate("/profile", {
-        state: {
-          user: {
-            id: profile.sub,
-            name: profile.name,
-            email: profile.email,
-            avatarUrl: profile.picture,
-          },
-        },
-      });
+      setUserProfile(nextUserProfile);
+      localStorage.setItem(
+        "moodcast_user_profile",
+        JSON.stringify(nextUserProfile),
+      );
+      setShowLogin(false);
+      setTaskMessage("Signed in. You can manage tasks on this page.");
     } catch (error) {
       console.error("Google login failed:", error);
       setLoginError(error.message || "Unable to sign in right now.");
@@ -197,14 +198,31 @@ function WeatherPage() {
   return (
     <main className="page">
       <div className="page-topbar">
-        <button
-          type="button"
-          className="auth-button"
-          onClick={() => setShowLogin((current) => !current)}
-        >
-          Sign up / Log in
-        </button>
-        {showLogin ? (
+        {userProfile ? (
+          <div className="user-badge">
+            {userProfile.picture ? (
+              <img
+                className="user-avatar"
+                src={userProfile.picture}
+                alt={userProfile.name}
+              />
+            ) : (
+              <div className="user-avatar-fallback">
+                {userProfile.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="user-name">{userProfile.name}</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="auth-button"
+            onClick={() => setShowLogin((current) => !current)}
+          >
+            Sign up / Log in
+          </button>
+        )}
+        {!userProfile && showLogin ? (
           <div className="auth-popover">
             {hasGoogleClientId ? (
               <GoogleOAuthProvider

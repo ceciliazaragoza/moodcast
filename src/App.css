@@ -35,6 +35,45 @@
   padding: 12px;
 }
 
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px 6px 6px;
+  background: var(--bg);
+}
+
+.user-avatar,
+.user-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.user-avatar {
+  object-fit: cover;
+}
+
+.user-avatar-fallback {
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+}
+
+.user-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .card {
   width: min(420px, 100%);
   display: grid;

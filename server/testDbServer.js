@@ -34,10 +34,16 @@ app.get("/api/test-db", async (_req, res) => {
     }
 
     const result = await pool.query("select * from hello limit 1;");
-    return res.json({ ok: true, row: result.rows[0] ?? null, rowCount: result.rowCount });
+    return res.json({
+      ok: true,
+      row: result.rows[0] ?? null,
+      rowCount: result.rowCount,
+    });
   } catch (error) {
     console.error("test-db query failed:", error);
-    return res.status(500).json({ ok: false, error: error.message || "Query failed" });
+    return res
+      .status(500)
+      .json({ ok: false, error: error.message || "Query failed" });
   }
 });
 
@@ -140,7 +146,9 @@ app.delete("/api/tasks", async (req, res) => {
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: "No matching task found." });
+      return res
+        .status(404)
+        .json({ ok: false, error: "No matching task found." });
     }
 
     return res.json({ ok: true, deletedTask: result.rows[0] });
