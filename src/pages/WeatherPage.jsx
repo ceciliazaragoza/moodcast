@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { Link } from "react-router-dom";
 import { getForecast } from "../services/weatherApi";
+import profileIcon from "../assets/pfp.jpg";
+import Task from "../Task.jsx";
 
 const parseGoogleCredential = (token) => {
   const payload = token.split(".")[1];
@@ -53,13 +55,45 @@ export default function WeatherPage() {
   const hasGoogleClientId = Boolean(
     import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID,
   );
+  const activeTaskEmail =
+    userProfile?.email ||
+    taskEmail ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("moodcast_email") || ""
+      : "");
+  const hasTaskIdentity = Boolean(activeTaskEmail);
+
+  useEffect(() => {
+    if (!userProfile || userProfile.email || !taskEmail) {
+      return;
+    }
+
+    const repairedUserProfile = {
+      ...userProfile,
+      email: taskEmail,
+    };
+    setUserProfile(repairedUserProfile);
+    localStorage.setItem(
+      "moodcast_user_profile",
+      JSON.stringify(repairedUserProfile),
+    );
+  }, [taskEmail, userProfile]);
+
+  useEffect(() => {
+    if (!userProfile?.email || taskEmail) {
+      return;
+    }
+
+    setTaskEmail(userProfile.email);
+    localStorage.setItem("moodcast_email", userProfile.email);
+  }, [taskEmail, userProfile]);
 
   const loadTasks = async (
-    emailToLoad = taskEmail,
+    emailToLoad = activeTaskEmail,
     { page = 1, append = false, successMessage = "Tasks loaded." } = {},
   ) => {
     if (!emailToLoad) {
-      setTaskError("Enter an email before loading tasks.");
+      setTaskError("Sign in first to load your tasks.");
       return;
     }
 
@@ -99,7 +133,7 @@ export default function WeatherPage() {
   };
 
   const loadMoreTasks = async () => {
-    await loadTasks(taskEmail, {
+    await loadTasks(activeTaskEmail, {
       page: taskPage + 1,
       append: true,
       successMessage: "Loaded more tasks.",
@@ -107,8 +141,16 @@ export default function WeatherPage() {
   };
 
   const addTask = async () => {
-    if (!taskEmail || !taskDescription) {
-      setTaskError("Email and task description are required.");
+    if (!taskDescription) {
+      setTaskError("Task description is required.");
+      return;
+    }
+
+    if (!activeTaskEmail) {
+      setTaskError(
+        "Could not find your email in this session. Sign in again to continue.",
+      );
+      setShowLogin(true);
       return;
     }
 
@@ -123,7 +165,7 @@ export default function WeatherPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: taskEmail,
+          email: activeTaskEmail,
           description: taskDescription,
           completed: taskCompleted,
         }),
@@ -138,7 +180,7 @@ export default function WeatherPage() {
 
       setTaskDescription("");
       setTaskCompleted(false);
-      await loadTasks(taskEmail, {
+      await loadTasks(activeTaskEmail, {
         page: 1,
         append: false,
         successMessage: "Task added.",
@@ -151,8 +193,8 @@ export default function WeatherPage() {
   };
 
   const deleteTask = async (description) => {
-    if (!taskEmail) {
-      setTaskError("Email is required to delete tasks.");
+    if (!activeTaskEmail) {
+      setTaskError("Sign in first to delete tasks.");
       return;
     }
 
@@ -167,7 +209,7 @@ export default function WeatherPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: taskEmail,
+          email: activeTaskEmail,
           description,
         }),
       });
@@ -179,7 +221,7 @@ export default function WeatherPage() {
         );
       }
 
-      await loadTasks(taskEmail, {
+      await loadTasks(activeTaskEmail, {
         page: 1,
         append: false,
         successMessage: "Task deleted.",
@@ -205,6 +247,7 @@ export default function WeatherPage() {
       const nextUserProfile = {
         name: profile.name || profile.email || "User",
         picture: profile.picture || "",
+        email: profile.email || "",
       };
       if (profile.email) {
         setTaskEmail(profile.email);
@@ -247,150 +290,70 @@ export default function WeatherPage() {
   }, []);
 
   return (
-    <main className="page">
-      <div className="page-topbar">
-        {userProfile ? (
-          <div className="user-badge">
-            {userProfile.picture ? (
-              <img
-                className="user-avatar"
-                src={userProfile.picture}
-                alt={userProfile.name}
-              />
-            ) : (
-              <div className="user-avatar-fallback">
-                {userProfile.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="user-name">{userProfile.name}</span>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="auth-button"
-            onClick={() => setShowLogin((current) => !current)}
-          >
-            Sign up / Log in
-          </button>
-        )}
-        {!userProfile && showLogin ? (
-          <div className="auth-popover">
-            {hasGoogleClientId ? (
-              <GoogleOAuthProvider
-                clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID || ""}
-              >
-                <GoogleLogin
-                  onSuccess={handleGoogleLogin}
-                  onError={() => {
-                    console.error("Google login failed.");
-                    setLoginError("Google login failed. Please try again.");
-                  }}
-                />
-              </GoogleOAuthProvider>
-            ) : (
-              <p className="error">
-                Missing VITE_GOOGLE_OAUTH_CLIENT_ID in .env
-              </p>
-            )}
-            {isLoggingIn ? <p>Signing in...</p> : null}
-            {loginError ? <p className="error">{loginError}</p> : null}
-          </div>
-        ) : null}
-      </div>
-      <section className="card">
-        <h1>Moodcast</h1>
-        <Link className="link" to="/test">
-          Open Supabase Test
-        </Link>
-        <input
-          type="text"
-          placeholder="Enter location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-        />
-        <button
-          onClick={async () => {
-            try {
-              const weatherData = await getForecast(location);
-              console.log(weatherData);
-            } catch (error) {
-              console.error("Error fetching weather data:", error);
-            }
-          }}
-        >
-          Get weather forecast
-        </button>
-
-        <div className="task-panel">
-          <h2>Tasks</h2>
-          <input
-            type="email"
-            placeholder="user@example.com"
-            value={taskEmail}
-            onChange={(event) => {
-              setTaskEmail(event.target.value);
-              localStorage.setItem("moodcast_email", event.target.value);
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Task description"
-            value={taskDescription}
-            onChange={(event) => setTaskDescription(event.target.value)}
-          />
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={taskCompleted}
-              onChange={(event) => setTaskCompleted(event.target.checked)}
+    <div className="container">
+      <div className="topRightProfile">
+        {userProfile && hasTaskIdentity ? (
+          <>
+            <span className="username">{userProfile.name}</span>
+            <img
+              src={userProfile.picture || profileIcon}
+              alt={userProfile.name}
+              className="topRightIcon"
             />
-            Completed
-          </label>
-          <div className="task-actions">
-            <button type="button" onClick={addTask} disabled={taskLoading}>
-              Add Task
-            </button>
+          </>
+        ) : (
+          <>
             <button
               type="button"
-              onClick={() =>
-                loadTasks(taskEmail, {
-                  page: 1,
-                  append: false,
-                  successMessage: "Tasks loaded.",
-                })
-              }
-              disabled={taskLoading}
+              className="auth-button"
+              onClick={() => setShowLogin((current) => !current)}
             >
-              Load Tasks
+              Sign up / Log in
             </button>
-          </div>
-
-          {taskLoading ? <p>Working...</p> : null}
-          {taskMessage ? <p className="success">{taskMessage}</p> : null}
-          {taskError ? <p className="error">{taskError}</p> : null}
-
-          {taskItems.length > 0 ? (
-            <div className="task-list">
-              <p>
-                Showing {taskItems.length} of {totalTasks} tasks.
-              </p>
-              {taskItems.map((task) => (
-                <div
-                  className="task-item"
-                  key={`${task.created_at}-${task.description}`}
-                >
-                  <p>
-                    {task.description} | {task.completed ? "Completed" : "Open"}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => deleteTask(task.description)}
-                    disabled={taskLoading}
+            {showLogin ? (
+              <div className="auth-popover">
+                {hasGoogleClientId ? (
+                  <GoogleOAuthProvider
+                    clientId={import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID || ""}
                   >
-                    Delete
-                  </button>
-                </div>
-              ))}
+                    <GoogleLogin
+                      onSuccess={handleGoogleLogin}
+                      onError={() => {
+                        console.error("Google login failed.");
+                        setLoginError("Google login failed. Please try again.");
+                      }}
+                    />
+                  </GoogleOAuthProvider>
+                ) : (
+                  <p className="error">
+                    Missing VITE_GOOGLE_OAUTH_CLIENT_ID in .env
+                  </p>
+                )}
+                {isLoggingIn ? <p>Signing in...</p> : null}
+                {loginError ? <p className="error">{loginError}</p> : null}
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
+      <main>
+        <div className="left">
+          <div className="leftContent">
+            <h1>Tasks</h1>
+            <p>
+              Showing {taskItems.length} of {totalTasks} tasks
+            </p>
+
+            {taskLoading ? <p>Working...</p> : null}
+            {taskMessage ? <p className="success">{taskMessage}</p> : null}
+            {taskError ? <p className="error">{taskError}</p> : null}
+
+            <div className="task-list">
+              <Task
+                tasks={taskItems}
+                taskLoading={taskLoading}
+                onDelete={deleteTask}
+              />
               {hasMoreTasks ? (
                 <button
                   type="button"
@@ -401,9 +364,84 @@ export default function WeatherPage() {
                 </button>
               ) : null}
             </div>
-          ) : null}
+          </div>
         </div>
-      </section>
-    </main>
+
+        <div className="right">
+          <div className="rightContent">
+            <h2>Moodcast</h2>
+            <Link className="link" to="/test">
+              Open Supabase Test
+            </Link>
+
+            <input
+              type="text"
+              placeholder="Enter location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const weatherData = await getForecast(location);
+                  console.log(weatherData);
+                } catch (error) {
+                  console.error("Error fetching weather data:", error);
+                }
+              }}
+            >
+              Get weather forecast
+            </button>
+
+            <div className="task-panel">
+              <h3>Add Task</h3>
+              {hasTaskIdentity ? (
+                <p className="helper-text">
+                  Adding tasks for: {activeTaskEmail}
+                </p>
+              ) : (
+                <p className="helper-text">
+                  Sign in to add and manage tasks. If you already signed in,
+                  click Sign up / Log in again to refresh your email.
+                </p>
+              )}
+              <input
+                type="text"
+                placeholder="Task description"
+                value={taskDescription}
+                onChange={(event) => setTaskDescription(event.target.value)}
+              />
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={taskCompleted}
+                  onChange={(event) => setTaskCompleted(event.target.checked)}
+                />
+                Completed
+              </label>
+              <div className="task-actions">
+                <button type="button" onClick={addTask} disabled={taskLoading}>
+                  Add Task
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    loadTasks(activeTaskEmail, {
+                      page: 1,
+                      append: false,
+                      successMessage: "Tasks loaded.",
+                    })
+                  }
+                  disabled={taskLoading}
+                >
+                  Refresh Tasks
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

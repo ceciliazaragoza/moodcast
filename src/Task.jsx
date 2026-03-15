@@ -1,14 +1,31 @@
 import "./App.css";
-import profileIcon from "./assets/pfp.jpg";
 
-function Task() {
+function Task({ tasks, taskLoading, onDelete }) {
+  if (!tasks || tasks.length === 0) {
+    return <p>No tasks yet. Add your first one on the right.</p>;
+  }
+
   return (
-  <div className="tasks">
-            <label>
-              <input type="checkbox" />
-              <span>Task Name</span>
-            </label>
-          </div>
+    <>
+      {tasks.map((task) => (
+        <div
+          className="task-item"
+          key={`${task.created_at}-${task.description}`}
+        >
+          <label className="tasks">
+            <input type="checkbox" checked={Boolean(task.completed)} readOnly />
+            <span>{task.description}</span>
+          </label>
+          <button
+            type="button"
+            onClick={() => onDelete(task.description)}
+            disabled={taskLoading}
+          >
+            Delete
+          </button>
+        </div>
+      ))}
+    </>
   );
 }
 
