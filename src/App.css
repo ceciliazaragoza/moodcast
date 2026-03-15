@@ -140,6 +140,10 @@ main {
   transition: all 0.3s ease;
 }
 
+.leftContent {
+  justify-content: center;
+}
+
 .leftContent:hover,
 .rightContent:hover {
   transform: translateY(-2px);
@@ -161,6 +165,8 @@ main {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-align: center;
+  width: 100%;
 }
 
 .rightContent h2 {
